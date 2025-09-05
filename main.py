@@ -2,6 +2,8 @@ from parser import parse_failed_logins
 from alert import send_email_alert
 from config import load_config
 from geoip import lookup_ip
+from ip_reputation import check_ip_reputation
+from alert_tracker import has_been_alerted, mark_alerted
 
 def main():
     """
@@ -26,9 +28,20 @@ def main():
         if geo:
             print(f"    Location: {geo['city']}, {geo['region']}, {geo['country']}")
             print(f"    Org: {geo['org']} | ASN: {geo['as']}")
+        
+        #Perform IP reputation check via OSINT API
+        reputation = check_ip_reputation(ip)
+        if reputation:
+            print(f"    Reputation: {reputation.get('abuseConfidenceScore', 'N/A')}% confidence")
+            print(f"    Last Reported: {reputation.get('lastReportedAt', 'N/A')}")
+            print(f"    Total Reports: {reputation.get('totalReports', 'N/A')}")
+        else:
+            print("    Reputation: No data found or API limit reached.")
 
-        if count >= threshold:
-            send_email_alert(ip, count, geo)
+
+        if count >= threshold and not has_been_alerted(ip):
+            send_email_alert(ip, count, geo, reputation)
+            mark_alerted(ip)
 
 if __name__ == "__main__":
     main()

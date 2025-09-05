@@ -2,7 +2,7 @@ import smtplib
 from email.message import EmailMessage
 import os
 
-def send_email_alert(ip, count, geo=None):
+def send_email_alert(ip, count, geo=None, reputation=None):
     """
     Sends an email alert when a specific IP exceeds the failed login threshold.
 
@@ -23,6 +23,15 @@ def send_email_alert(ip, count, geo=None):
         body += "\n\nGeoIP Information:\n"
         body += f"  Location: {geo.get('city')}, {geo.get('region')}, {geo.get('country')}\n"
         body += f"  Org: {geo.get('org')} | ASN: {geo.get('as')}\n"
+
+    if reputation:
+        body += "\n\nIP Reputation Info:\n"
+        body += f"  Abuse Confidence Score: {reputation.get('abuseConfidenceScore')} / 100\n"
+        body += f"  ISP: {reputation.get('isp')}\n"
+        body += f"  Domain: {reputation.get('domain')}\n"
+        body += f"  Country: {reputation.get('countryCode')}\n"
+        body += f"  Total Reports: {reputation.get('totalReports')}\n"
+        body += f"  Last Reported: {reputation.get('lastReportedAt')}\n"
 
     # Construct the email message
     msg = EmailMessage()
